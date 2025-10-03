@@ -1,0 +1,34 @@
+###########################################
+# CCNA Lab 01: Router Basic Configuration #
+###########################################
+
+# 1. Enter privileged EXEC mode
+enable
+
+# 2. Enter global configuration mode
+configure terminal
+
+# 3. Set router hostname
+hostname company_router
+
+# 4. Set privileged EXEC password (encrypted)
+enable secret cisco
+
+# 5. (Optional) Save the configuration
+end
+write memory
+or
+copy running-config startup-config
+
+###########################################
+# Verification Commands
+###########################################
+
+# Show current configuration
+show running-config
+
+# Show startup configuration
+show startup-config
+
+# Show IP interfaces (status)
+show ip interface brief
