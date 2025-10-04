@@ -1,0 +1,72 @@
+###########################################################
+# CCNA Lab 02-03: Router Interface and DHCP Configuration #
+###########################################################
+
+# 1. Enter privileged EXEC mode
+enable
+
+# 2. Enter global configuration mode
+configure terminal
+
+###########################################
+# Part 1: Interface Configuration
+###########################################
+
+# 3. Select the target interface
+interface GigabitEthernet0/0
+
+# 4. Assign an IP address and subnet mask
+ip address 192.168.1.1 255.255.255.0
+
+# 5. Enable the interface (bring it up)
+no shutdown
+
+# 6. Return to global configuration mode
+exit
+
+###########################################
+# Part 2: DHCP Server Configuration
+###########################################
+
+# 7. Create a DHCP pool with a specific name
+ip dhcp pool dhcb_1
+
+# 8. Define the network and mask for the address pool
+network 192.168.1.0 255.255.255.0
+
+# 9. Specify the default gateway for clients
+default-router 192.168.1.1
+
+# 10. (Optional) Specify the DNS server for clients
+dns-server 8.8.8.8
+
+# 11. Exit DHCP configuration mode
+exit
+
+###########################################
+# Save and Verify
+###########################################
+
+# 12. Exit configuration mode
+end
+
+# 13. Save the running configuration to startup configuration
+write memory
+# OR
+# copy running-config startup-config
+
+###########################################
+# Verification Commands
+###########################################
+
+# Show the status and IP of all interfaces
+show ip interface brief
+
+# Show the running configuration to verify interface and DHCP settings
+show running-config
+
+# Show the IP addresses that have been leased to DHCP clients
+show ip dhcp binding
+
+# Ping a client from the router (replace with the client's actual IP)
+# ping 192.168.1.2
