@@ -1,0 +1,102 @@
+#################################################
+# CCNA Lab 04: Configuring IPv4 Static Routes   #
+#################################################
+
+################################
+# Router 1: Company_HQ
+################################
+
+# 1. Enter privileged EXEC and global configuration modes
+enable
+configure terminal
+
+# 2. Basic device setup
+hostname Company_HQ
+enable secret cisco
+
+# 3. Configure the LAN interface (connected to PC_Company_HQ)
+interface FastEthernet0/0
+ ip address 192.168.1.1 255.255.255.0
+ no shutdown
+ exit
+
+# 4. Configure DHCP server for the HQ LAN
+ip dhcp pool dhcp_HQ_1
+ network 192.168.1.0 255.255.255.0
+ default-router 192.168.1.1
+ dns-server 8.8.8.8
+ exit
+
+# 5. Configure the WAN interface (connected to Company_BR)
+interface Serial0/0/0
+ ip address 10.0.0.1 255.255.255.252
+ no shutdown
+ exit
+
+# 6. Configure the static route to the remote BR network
+# Syntax: ip route <destination-network> <subnet-mask> <exit-interface or next-hop-ip>
+ip route 192.168.2.0 255.255.255.0 Serial0/0/0
+
+# 7. Exit configuration mode and save
+end
+write memory
+
+################################
+# Router 2: Company_BR
+################################
+
+# 1. Enter privileged EXEC and global configuration modes
+enable
+configure terminal
+
+# 2. Basic device setup
+hostname Company_BR
+enable secret cisco
+
+# 3. Configure the LAN interface (connected to PC_Company_BR)
+interface FastEthernet0/0
+ ip address 192.168.2.1 255.255.255.0
+ no shutdown
+ exit
+
+# 4. Configure DHCP server for the BR LAN
+ip dhcp pool dhcp_BR_1
+ network 192.168.2.0 255.255.255.0
+ default-router 192.168.2.1
+ dns-server 8.8.8.8
+ exit
+
+# 5. Configure the WAN interface (connected to Company_HQ)
+interface Serial0/0/0
+ ip address 10.0.0.2 255.255.255.252
+ no shutdown
+ exit
+
+# 6. Configure the static route to the remote HQ network
+ip route 192.168.1.0 255.255.255.0 Serial0/0/0
+
+# 7. Exit configuration mode and save
+end
+write memory
+
+################################
+# Verification Commands (run on both routers)
+################################
+
+# Show the status of all interfaces
+show ip interface brief
+
+# Display the IP routing table to verify the static route (marked with 'S')
+show ip route
+
+# Ping the other side of the WAN link
+# On Company_HQ: ping 10.0.0.2
+# On Company_BR: ping 10.0.0.1
+
+# Ping the remote LAN router interface
+# On Company_HQ: ping 192.168.2.1
+# On Company_BR: ping 192.168.1.1
+
+# Ping the remote PC (assuming it received an IP like x.x.x.2 via DHCP)
+# On Company_HQ: ping 192.168.2.2
+# On Company_BR: ping 192.168.1.2
