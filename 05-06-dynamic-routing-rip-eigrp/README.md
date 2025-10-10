@@ -260,10 +260,10 @@ D    192.168.2.0/24 [90/20514560] via 10.0.0.5, 00:01:04, Serial0/1/0
 
 ```
 05-06-dynamic-routing-rip-eigrp/
-├── README.md
-├── topology.pkt
+├── README.md               # Lab instructions & documentation
+├── topology.pkt            # Packet Tracer file
 ├── configs/
-│   └── commands.txt
+│   └── commands.txt       # All CLI commands used in this lab
 └── diagrams/
     ├── message_simulation_between_two_lans.gif
     ├── physical_show_of_router1841_company_br.png
