@@ -1,0 +1,100 @@
+#############################################################
+# CCNA Lab 08: Configuring Spanning Tree Protocol (STP)     #
+#############################################################
+
+################################
+# Multilayer Switch: core-switch0-HQ
+################################
+
+# 1. Enter privileged EXEC and global configuration modes
+enable
+configure terminal
+
+# 2. Basic device setup
+hostname core-switch0-HQ
+enable secret pass0c0
+
+# 3. Set as root bridge for all VLANs
+spanning-tree vlan 1-4094 priority 0
+
+# 4. Verification
+show spanning-tree
+
+# 5. Exit configuration mode and save
+end
+write memory
+
+################################
+# Access Switch: switch0_HQ_F1
+################################
+
+# 1. Enter privileged EXEC and global configuration modes
+enable
+configure terminal
+
+# 2. Basic device setup
+hostname switch0_HQ_F1
+enable secret pass0f1
+
+# 3. Configure PortFast and BPDU Guard on access ports
+interface range FastEthernet0/1 - 23
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ exit
+
+# 4. Verification
+show spanning-tree
+
+# 5. Exit configuration mode and save
+end
+write memory
+
+################################
+# Access Switch: switch0_HQ_F2
+################################
+
+# 1. Enter privileged EXEC and global configuration modes
+enable
+configure terminal
+
+# 2. Basic device setup
+hostname switch0_HQ_F2
+enable secret pass0f2
+
+# 3. Configure PortFast and BPDU Guard on access ports
+interface range FastEthernet0/1 - 22
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ exit
+
+# 4. Verification
+show spanning-tree
+
+# 5. Exit configuration mode and save
+end
+write memory
+
+################################
+# Access Switch: switch0_HQ_F3
+################################
+
+# 1. Enter privileged EXEC and global configuration modes
+enable
+configure terminal
+
+# 2. Basic device setup
+hostname switch0_HQ_F3
+enable secret pass0f3
+
+# 3. Configure PortFast and BPDU Guard on access ports
+interface range FastEthernet0/1 - 23
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ exit
+
+# 4. Verification
+show spanning-tree
+
+# 5. Exit configuration mode and save
+end
+write memory
