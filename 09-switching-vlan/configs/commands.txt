@@ -1,0 +1,212 @@
+#############################################################
+# CCNA Lab 09: Configuring VLANs and Inter-VLAN Routing     #
+#############################################################
+
+################################
+# Multilayer Switch: core-switch0-HQ
+################################
+
+# 1. Enter privileged EXEC and global configuration modes
+enable
+configure terminal
+
+# 2. Basic device setup & STP Root (from previous lab)
+hostname core-switch0-HQ
+enable secret pass0c0
+spanning-tree vlan 1-4094 priority 0
+
+# 3. Configure VTP Server and create VLANs
+vtp domain HQ
+vtp mode server
+vlan 2
+ name admin
+vlan 3
+ name employee
+exit
+
+# 4. Enable Inter-VLAN routing and configure SVIs
+ip routing
+interface Vlan2
+ ip address 192.168.1.1 255.255.255.0
+ no shutdown
+exit
+interface Vlan3
+ ip address 192.168.2.1 255.255.255.0
+ no shutdown
+exit
+
+# 5. Configure DHCP for VLANs
+ip dhcp excluded-address 192.168.1.1
+ip dhcp excluded-address 192.168.2.1
+!
+ip dhcp pool VLAN2_ADMIN_HQ
+ network 192.168.1.0 255.255.255.0
+ default-router 192.168.1.1
+exit
+!
+ip dhcp pool VLAN3_EMPLOYEE_HQ
+ network 192.168.2.0 255.255.255.0
+ default-router 192.168.2.1
+exit
+
+# 6. Configure trunk ports
+interface range GigabitEthernet1/0/1 - 6
+ switchport mode trunk
+exit
+
+# 7. Verification
+show vlan
+show ip interface brief
+show ip dhcp binding
+
+# 8. Exit configuration mode and save
+end
+write memory
+
+################################
+# Access Switch: switch0_HQ_F1
+################################
+
+# 1. Enter privileged EXEC and global configuration modes
+enable
+configure terminal
+
+# 2. Basic device setup (from previous lab)
+hostname switch0_HQ_F1
+enable secret pass0f1
+interface range FastEthernet0/1 - 23
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+exit
+
+# 3. Configure VTP Client
+vtp mode client
+vtp domain HQ
+
+# 4. Configure trunk ports
+interface range GigabitEthernet0/1 - 2
+ switchport mode trunk
+exit
+interface FastEthernet0/24
+ switchport mode trunk
+exit
+
+# 5. Configure access ports and assign to VLAN 2
+interface range FastEthernet0/1 - 23
+ switchport mode access
+ switchport access vlan 2
+exit
+
+# 6. Configure management IP address
+interface vlan 1
+ ip address 192.168.1.252 255.255.255.0
+ no shutdown
+exit
+ip default-gateway 192.168.1.1
+
+# 7. Verification
+show vlan
+
+# 8. Exit configuration mode and save
+end
+write memory
+
+################################
+# Access Switch: switch0_HQ_F2
+################################
+
+# 1. Enter privileged EXEC and global configuration modes
+enable
+configure terminal
+
+# 2. Basic device setup (from previous lab)
+hostname switch0_HQ_F2
+enable secret pass0f2
+interface range FastEthernet0/1 - 22
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+exit
+
+# 3. Configure VTP Client
+vtp mode client
+vtp domain HQ
+
+# 4. Configure trunk ports
+interface range GigabitEthernet0/1 - 2
+ switchport mode trunk
+exit
+interface range FastEthernet0/23 - 24
+ switchport mode trunk
+exit
+
+# 5. Configure access ports and assign to VLANs
+interface range FastEthernet0/1 - 11
+ switchport mode access
+ switchport access vlan 3
+exit
+interface range FastEthernet0/12 - 22
+ switchport mode access
+ switchport access vlan 2
+exit
+
+# 6. Configure management IP address
+interface vlan 1
+ ip address 192.168.1.253 255.255.255.0
+ no shutdown
+exit
+ip default-gateway 192.168.1.1
+
+# 7. Verification
+show vlan
+
+# 8. Exit configuration mode and save
+end
+write memory
+
+################################
+# Access Switch: switch0_HQ_F3
+################################
+
+# 1. Enter privileged EXEC and global configuration modes
+enable
+configure terminal
+
+# 2. Basic device setup (from previous lab)
+hostname switch0_HQ_F3
+enable secret pass0f3
+interface range FastEthernet0/1 - 23
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+exit
+
+# 3. Configure VTP Client
+vtp mode client
+vtp domain HQ
+
+# 4. Configure trunk ports
+interface range GigabitEthernet0/1 - 2
+ switchport mode trunk
+exit
+interface FastEthernet0/24
+ switchport mode trunk
+exit
+
+# 5. Configure access ports and assign to VLAN 3
+interface range FastEthernet0/1 - 23
+ switchport mode access
+ switchport access vlan 3
+exit
+
+# 6. Configure management IP address
+interface vlan 1
+ ip address 192.168.1.254 255.255.255.0
+ no shutdown
+exit
+ip default-gateway 192.168.1.1
+
+# 7. Verification
+show vlan
+
+# 8. Exit configuration mode and save
+end
+write memory
