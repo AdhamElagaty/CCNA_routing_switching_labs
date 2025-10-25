@@ -1,0 +1,360 @@
+#############################################################
+# CCNA Lab 11: Configuring Management Services (NTP, Logging, and SNMP) #
+#############################################################
+
+# This configuration builds upon the previous labs.
+# The initial setup commands are included for completeness.
+
+################################
+# Multilayer Switch: core-switch0-HQ
+################################
+
+# 1. Enter privileged EXEC and global configuration modes
+enable
+configure terminal
+
+# 2. Basic device setup
+hostname core-switch0-HQ
+enable secret pass0c0
+line vty 0 4
+ password pass1t
+ login
+exit
+
+# 3. Set as root bridge for all VLANs (from Lab 08)
+spanning-tree vlan 1-4094 priority 0
+
+# 4. Configure VTP Server and create VLANs (from Lab 09 & 11)
+vtp domain HQ
+vtp mode server
+vlan 2
+ name admin
+vlan 3
+ name employee
+vlan 10
+ name Management
+exit
+
+# 5. Enable Inter-VLAN routing and configure SVIs (from Lab 09 & 11)
+ip routing
+interface Vlan2
+ ip address 192.168.1.1 255.255.255.0
+ no shutdown
+exit
+interface Vlan3
+ ip address 192.168.2.1 255.255.255.0
+ no shutdown
+exit
+interface Vlan10
+ ip address 192.168.40.1 255.255.255.0
+ no shutdown
+exit
+
+# 6. Configure DHCP for VLANs (from Lab 09 & 11)
+ip dhcp excluded-address 192.168.1.1
+ip dhcp excluded-address 192.168.2.1
+ip dhcp excluded-address 192.168.1.251 192.168.1.254
+ip dhcp excluded-address 192.168.40.1
+ip dhcp excluded-address 192.168.40.254
+!
+ip dhcp pool VLAN2_ADMIN_HQ
+ network 192.168.1.0 255.255.255.0
+ default-router 192.168.1.1
+exit
+!
+ip dhcp pool VLAN3_EMPLOYEE_HQ
+ network 192.168.2.0 255.255.255.0
+ default-router 192.168.2.1
+exit
+!
+ip dhcp pool VLAN10_MANAGEMENT_HQ
+ network 192.168.40.0 255.255.255.0
+ default-router 192.168.40.1
+exit
+
+# 7. Configure LACP EtherChannels (from Lab 10 & 11)
+! Uplink to switch0_HQ_F3
+interface range GigabitEthernet1/0/1 - 2
+ channel-group 1 mode active
+ no shutdown
+exit
+! Uplink to switch0_HQ_F2
+interface range GigabitEthernet1/0/3 - 4
+ channel-group 2 mode active
+ no shutdown
+exit
+! Uplink to switch0_HQ_F1
+interface range GigabitEthernet1/0/5 - 6
+ channel-group 3 mode active
+ no shutdown
+exit
+! Uplink to switch0_HQ_MR1
+interface range GigabitEthernet1/0/7 - 8
+ channel-group 4 mode active
+ no shutdown
+exit
+
+# 8. Configure Port-Channels as Trunks
+interface Port-channel1
+ switchport mode trunk
+exit
+interface Port-channel2
+ switchport mode trunk
+exit
+interface Port-channel3
+ switchport mode trunk
+exit
+interface Port-channel4
+ switchport mode trunk
+exit
+
+# 9. Configure Management Services
+ntp server 192.168.40.254
+logging 192.168.40.254
+snmp-server community pass2snmp_ro RO
+snmp-server community pass2snmp_rw RW
+
+# 10. Exit configuration mode and save
+end
+write memory
+
+################################
+# Access Switch: switch0_HQ_F1
+################################
+
+# 1. Enter privileged EXEC and global configuration modes
+enable
+configure terminal
+
+# 2. Basic device setup
+hostname switch0_HQ_F1
+enable secret pass0f1
+line vty 0 4
+ password pass1t
+ login
+exit
+
+# 3. Configure PortFast and BPDU Guard (from Lab 08)
+interface range FastEthernet0/1 - 23
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+exit
+
+# 4. Configure VTP Client (from Lab 09)
+vtp mode client
+vtp domain HQ
+
+# 5. Configure access ports (from Lab 09)
+interface range FastEthernet0/1 - 23
+ switchport mode access
+ switchport access vlan 2
+exit
+interface FastEthernet0/24
+ switchport mode trunk
+exit
+
+# 6. Configure management IP address (from Lab 09)
+interface vlan 2
+ ip address 192.168.1.252 255.255.255.0
+ no shutdown
+exit
+ip default-gateway 192.168.1.1
+
+# 7. Configure LACP EtherChannel (from Lab 10)
+interface range GigabitEthernet0/1 - 2
+ channel-group 3 mode active
+ no shutdown
+exit
+interface Port-channel3
+ switchport mode trunk
+exit
+
+# 8. Configure Management Services
+ntp server 192.168.40.254
+logging 192.168.40.254
+snmp-server community pass2snmp_ro RO
+snmp-server community pass2snmp_rw RW
+
+# 9. Exit configuration mode and save
+end
+write memory
+
+################################
+# Access Switch: switch0_HQ_F2
+################################
+
+# 1. Enter privileged EXEC and global configuration modes
+enable
+configure terminal
+
+# 2. Basic device setup
+hostname switch0_HQ_F2
+enable secret pass0f2
+line vty 0 4
+ password pass1t
+ login
+exit
+
+# 3. Configure PortFast and BPDU Guard (from Lab 08)
+interface range FastEthernet0/1 - 22
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+exit
+
+# 4. Configure VTP Client (from Lab 09)
+vtp mode client
+vtp domain HQ
+
+# 5. Configure access/trunk ports (from Lab 09)
+interface range FastEthernet0/23 - 24
+ switchport mode trunk
+exit
+interface range FastEthernet0/1 - 11
+ switchport mode access
+ switchport access vlan 3
+exit
+interface range FastEthernet0/12 - 22
+ switchport mode access
+ switchport access vlan 2
+exit
+
+# 6. Configure management IP address (from Lab 09)
+interface vlan 2
+ ip address 192.168.1.253 255.255.255.0
+ no shutdown
+exit
+ip default-gateway 192.168.1.1
+
+# 7. Configure LACP EtherChannel (from Lab 10)
+interface range GigabitEthernet0/1 - 2
+ channel-group 2 mode active
+ no shutdown
+exit
+interface Port-channel2
+ switchport mode trunk
+exit
+
+# 8. Configure Management Services
+ntp server 192.168.40.254
+logging 192.168.40.254
+snmp-server community pass2snmp_ro RO
+snmp-server community pass2snmp_rw RW
+
+# 9. Exit configuration mode and save
+end
+write memory
+
+################################
+# Access Switch: switch0_HQ_F3
+################################
+
+# 1. Enter privileged EXEC and global configuration modes
+enable
+configure terminal
+
+# 2. Basic device setup
+hostname switch0_HQ_F3
+enable secret pass0f3
+line vty 0 4
+ password pass1t
+ login
+exit
+
+# 3. Configure PortFast and BPDU Guard (from Lab 08)
+interface range FastEthernet0/1 - 23
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+exit
+
+# 4. Configure VTP Client (from Lab 09)
+vtp mode client
+vtp domain HQ
+
+# 5. Configure access/trunk ports (from Lab 09)
+interface range FastEthernet0/1 - 23
+ switchport mode access
+ switchport access vlan 3
+exit
+interface FastEthernet0/24
+ switchport mode trunk
+exit
+
+# 6. Configure management IP address (from Lab 09)
+interface vlan 2
+ ip address 192.168.1.254 255.255.255.0
+ no shutdown
+exit
+ip default-gateway 192.168.1.1
+
+# 7. Configure LACP EtherChannel (from Lab 10)
+interface range GigabitEthernet0/1 - 2
+ channel-group 1 mode active
+ no shutdown
+exit
+interface Port-channel1
+ switchport mode trunk
+exit
+
+# 8. Configure Management Services
+ntp server 192.168.40.254
+logging 192.168.40.254
+snmp-server community pass2snmp_ro RO
+snmp-server community pass2snmp_rw RW
+
+# 9. Exit configuration mode and save
+end
+write memory
+
+####################################
+# Management Room Switch: switch0_HQ_MR1
+####################################
+
+# 1. Enter privileged EXEC and global configuration modes
+enable
+configure terminal
+
+# 2. Basic device setup
+hostname switch0_HQ_MR1
+enable secret pass0mr1
+line vty 0 4
+ password pass1t
+ login
+exit
+
+# 3. Configure VTP Client
+vtp mode client
+vtp domain HQ
+
+# 4. Configure access ports for Management VLAN
+interface range FastEthernet0/1 - 24
+ switchport mode access
+ switchport access vlan 10
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+exit
+
+# 5. Configure management IP address
+interface vlan 2
+ ip address 192.168.1.251 255.255.255.0
+ no shutdown
+exit
+ip default-gateway 192.168.1.1
+
+# 6. Configure LACP EtherChannel (Uplink to Core)
+interface range GigabitEthernet0/1 - 2
+ channel-group 4 mode active
+ no shutdown
+exit
+interface Port-channel4
+ switchport mode trunk
+exit
+
+# 7. Configure Management Services
+ntp server 192.168.40.254
+logging 192.168.40.254
+snmp-server community pass2snmp_ro RO
+snmp-server community pass2snmp_rw RW
+
+# 8. Exit configuration mode and save
+end
+write memory
