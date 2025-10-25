@@ -198,7 +198,6 @@ The output should indicate that the clock is synchronized.
 core-switch0-HQ#show ntp status
 Clock is synchronized, stratum 16, reference is 192.168.40.254
 nominal freq is 250.0000 Hz, actual freq is 249.9990 Hz, precision is 2**24
-...
 ```
 
 ### Any Switch (`show running-config | include snmp`)
