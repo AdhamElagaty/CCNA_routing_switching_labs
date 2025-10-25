@@ -17,7 +17,7 @@ The purpose of this lab is to configure essential network management services to
 
 ## 🔗 Prerequisite Labs
 
-This lab is the final step in building a complete enterprise network and builds directly on the configurations from the previous labs. The initial setup (STP, VLANs, Inter-VLAN routing, and LACP) is assumed to be in place.
+This lab is step in building a complete enterprise network and builds directly on the configurations from the previous labs. The initial setup (STP, VLANs, Inter-VLAN routing, and LACP) is assumed to be in place.
 
 *   ➡️ **[Lab 08: Configuring Spanning Tree Protocol (STP)](../08-switching-stp/README.md)**
 *   ➡️ **[Lab 09: Configuring VLANs and Inter-VLAN Routing](../09-switching-vlan/README.md)**
