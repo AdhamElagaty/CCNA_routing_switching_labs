@@ -1,0 +1,219 @@
+#############################################################
+# CCNA Lab 13: Final Enterprise Network - HQ Configurations #
+#############################################################
+
+################################
+# Router: Router0_HQ
+################################
+
+enable
+configure terminal
+
+# 1. Basic Setup & Security
+hostname Router0_HQ
+enable secret pass0hq0
+
+# 2. VTY Access Control (from Lab 12)
+ip access-list standard VTY_ACCESS
+ permit 192.168.40.0 0.0.0.255
+ exit
+!
+line vty 0 4
+ access-class VTY_ACCESS in
+ password pass1t
+ login
+ exit
+
+# 3. Interface Configuration
+! Connection to HQ Core Switch
+interface GigabitEthernet0/0
+ ip address 10.0.0.2 255.255.255.252
+ no shutdown
+ exit
+!
+! Primary WAN Link to SP Network
+interface Serial0/0/0
+ ip address 10.10.1.1 255.255.255.252
+ no shutdown
+ exit
+!
+! Redundant WAN Link to SP Network
+interface Serial0/0/1
+ ip address 10.10.2.1 255.255.255.252
+ no shutdown
+ exit
+
+# 4. OSPF Routing Configuration (from Lab 07)
+router ospf 1
+ router-id 1.1.1.1
+ network 10.0.0.0 0.0.0.3 area 0
+ network 10.10.1.0 0.0.0.3 area 0
+ network 10.10.2.0 0.0.0.3 area 0
+ exit
+
+# 5. Management Services (from Lab 11)
+ntp server 192.168.40.254
+logging 192.168.40.254
+snmp-server community pass2snmp_ro RO
+snmp-server community pass2snmp_rw RW
+
+end
+write memory
+
+################################
+# Multilayer Switch: core-switch0-HQ
+################################
+
+enable
+configure terminal
+
+# 1. Basic Setup & VTY Security
+hostname core-switch0-HQ
+enable secret pass0c0
+!
+ip access-list standard VTY_ACCESS
+ permit 192.168.40.0 0.0.0.255
+ exit
+!
+line vty 0 4
+ access-class VTY_ACCESS in
+ password pass1t
+ login
+ exit
+
+# 2. STP Root Bridge Configuration (from Lab 08)
+spanning-tree vlan 1-4094 priority 0
+
+# 3. VTP Server & VLAN Creation (from Lab 09 & 11)
+vtp domain HQ
+vtp mode server
+vlan 2
+ name admin
+vlan 3
+ name employee
+vlan 10
+ name Management
+ exit
+
+# 4. SVI & Inter-VLAN Routing (from Lab 09 & 11)
+ip routing
+!
+interface Vlan2
+ ip address 192.168.1.1 255.255.255.0
+ no shutdown
+ exit
+!
+interface Vlan3
+ ip address 192.168.2.1 255.255.255.0
+ ip access-group EMPLOYEE_VLAN_ACCESS_IN in
+ no shutdown
+ exit
+!
+interface Vlan10
+ ip address 192.168.40.1 255.255.255.0
+ no shutdown
+ exit
+
+# 5. DHCP Configuration (from Lab 09 & 11)
+ip dhcp excluded-address 192.168.1.1
+ip dhcp excluded-address 192.168.2.1
+ip dhcp excluded-address 192.168.40.1
+ip dhcp excluded-address 192.168.1.251 192.168.1.254
+ip dhcp excluded-address 192.168.40.254
+!
+ip dhcp pool VLAN2_ADMIN_HQ
+ network 192.168.1.0 255.255.255.0
+ default-router 192.168.1.1
+ exit
+!
+ip dhcp pool VLAN3_EMPLOYEE_HQ
+ network 192.168.2.0 255.255.255.0
+ default-router 192.168.2.1
+ exit
+!
+ip dhcp pool VLAN10_MANAGEMENT_HQ
+ network 192.168.40.0 255.255.255.0
+ default-router 192.168.40.1
+ exit
+
+# 6. LACP EtherChannel Configuration (from Lab 10)
+! Uplink to switch0_HQ_F3
+interface range GigabitEthernet1/0/1 - 2
+ channel-group 1 mode active
+ no shutdown
+ exit
+! Uplink to switch0_HQ_F2
+interface range GigabitEthernet1/0/3 - 4
+ channel-group 2 mode active
+ no shutdown
+ exit
+! Uplink to switch0_HQ_F1
+interface range GigabitEthernet1/0/5 - 6
+ channel-group 3 mode active
+ no shutdown
+ exit
+! Uplink to switch0_HQ_MR1
+interface range GigabitEthernet1/0/7 - 8
+ channel-group 4 mode active
+ no shutdown
+ exit
+
+# 7. Configure Port-Channels as Trunks
+interface Port-channel1
+ switchport mode trunk
+ exit
+interface Port-channel2
+ switchport mode trunk
+ exit
+interface Port-channel3
+ switchport mode trunk
+ exit
+interface Port-channel4
+ switchport mode trunk
+ exit
+
+# 8. Security ACL for Employee VLAN (from Lab 12)
+ip access-list extended EMPLOYEE_VLAN_ACCESS_IN
+ permit ip 192.168.2.0 0.0.0.255 192.168.1.0 0.0.0.255
+ permit icmp any 192.168.2.0 0.0.0.255 echo-reply
+ deny   icmp 192.168.2.0 0.0.0.255 192.168.40.0 0.0.0.255 echo
+ permit ip 192.168.2.0 0.0.0.255 any
+ permit udp any any eq bootps
+ exit
+
+# 9. L3 Link to Edge Router
+interface GigabitEthernet1/0/24
+ no switchport
+ ip address 10.0.0.1 255.255.255.252
+ no shutdown
+ exit
+
+# 10. OSPF Configuration (from Lab 07)
+router ospf 1
+ router-id 10.1.1.1
+ network 192.168.1.0 0.0.0.255 area 0
+ network 192.168.2.0 0.0.0.255 area 0
+ network 192.168.40.0 0.0.0.255 area 0
+ network 10.0.0.0 0.0.0.3 area 0
+ passive-interface Vlan2
+ passive-interface Vlan3
+ passive-interface Vlan10
+ exit
+
+# 11. Management Services (from Lab 11)
+ntp server 192.168.40.254
+logging 192.168.40.254
+snmp-server community pass2snmp_ro RO
+snmp-server community pass2snmp_rw RW
+
+end
+write memory
+
+################################
+# Other HQ Access Switches
+# switch0_HQ_F1, switch0_HQ_F2, switch0_HQ_F3, switch0_HQ_MR1
+# Note: Configurations for these are similar to previous labs,
+# with VTP client mode, PortFast, BPDUGuard, LACP,
+# and management services configured. Refer to individual
+# lab files for detailed steps.
+################################
