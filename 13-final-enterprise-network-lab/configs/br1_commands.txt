@@ -1,0 +1,184 @@
+#################################################################
+# CCNA Lab 13: Final Enterprise Network - Branch 1 Configurations #
+#################################################################
+
+################################
+# Router: Router0_BR1
+################################
+
+enable
+configure terminal
+
+# 1. Basic Setup & Security
+hostname Router0_BR1
+enable secret pass0br10
+!
+ip access-list standard VTY_ACCESS
+ permit 192.168.40.0 0.0.0.255
+ exit
+!
+line vty 0 4
+ access-class VTY_ACCESS in
+ password pass1t
+ login
+ exit
+
+# 2. Interface Configuration
+! Connection to BR1 Core Switch
+interface GigabitEthernet0/0
+ ip address 10.0.1.2 255.255.255.252
+ no shutdown
+ exit
+!
+! Primary WAN Link to SP Network
+interface Serial0/0/0
+ ip address 10.20.1.1 255.255.255.252
+ no shutdown
+ exit
+!
+! Redundant WAN Link to SP Network
+interface Serial0/0/1
+ ip address 10.20.2.1 255.255.255.252
+ no shutdown
+ exit
+
+# 3. OSPF Routing Configuration
+router ospf 1
+ router-id 2.2.2.2
+ network 10.0.1.0 0.0.0.3 area 0
+ network 10.20.1.0 0.0.0.3 area 0
+ network 10.20.2.0 0.0.0.3 area 0
+ exit
+
+# 4. Management Services
+ntp server 192.168.40.254
+logging 192.168.40.254
+snmp-server community pass2snmp_ro RO
+snmp-server community pass2snmp_rw RW
+
+end
+write memory
+
+################################
+# Multilayer Switch: core-switch0-BR1
+################################
+
+enable
+configure terminal
+
+# 1. Basic Setup & VTY Security
+hostname core-switch0-BR1
+enable secret pass0c0
+!
+ip access-list standard VTY_ACCESS
+ permit 192.168.40.0 0.0.0.255
+ exit
+!
+line vty 0 4
+ access-class VTY_ACCESS in
+ password pass1t
+ login
+ exit
+
+# 2. STP Root Bridge Configuration
+spanning-tree vlan 1-4094 priority 0
+
+# 3. VTP Server & VLAN Creation
+vtp domain BR1
+vtp mode server
+vlan 2
+ name admin
+vlan 3
+ name employee
+ exit
+
+# 4. SVI & Inter-VLAN Routing
+ip routing
+!
+interface Vlan2
+ ip address 192.168.11.1 255.255.255.0
+ no shutdown
+ exit
+!
+interface Vlan3
+ ip address 192.168.12.1 255.255.255.0
+ ip access-group EMPLOYEE_VLAN_ACCESS_IN in
+ no shutdown
+ exit
+
+# 5. DHCP Configuration
+ip dhcp excluded-address 192.168.11.1
+ip dhcp excluded-address 192.168.12.1
+ip dhcp excluded-address 192.168.11.252 192.168.11.254
+!
+ip dhcp pool VLAN2_ADMIN_BR1
+ network 192.168.11.0 255.255.255.0
+ default-router 192.168.11.1
+ exit
+!
+ip dhcp pool VLAN3_EMPLOYEE_BR1
+ network 192.168.12.0 255.255.255.0
+ default-router 192.168.12.1
+ exit
+
+# 6. LACP EtherChannel and Trunk Configuration
+interface range GigabitEthernet1/0/1 - 2
+ channel-group 1 mode active
+ exit
+interface range GigabitEthernet1/0/3 - 4
+ channel-group 2 mode active
+ exit
+interface range GigabitEthernet1/0/5 - 6
+ channel-group 3 mode active
+ exit
+!
+interface Port-channel1
+ switchport mode trunk
+ exit
+interface Port-channel2
+ switchport mode trunk
+ exit
+interface Port-channel3
+ switchport mode trunk
+ exit
+
+# 7. Security ACL for Employee VLAN
+ip access-list extended EMPLOYEE_VLAN_ACCESS_IN
+ permit ip 192.168.12.0 0.0.0.255 192.168.11.0 0.0.0.255
+ permit icmp any 192.168.12.0 0.0.0.255 echo-reply
+ deny   icmp 192.168.12.0 0.0.0.255 192.168.40.0 0.0.0.255 echo
+ permit ip 192.168.12.0 0.0.0.255 any
+ permit udp any any eq bootps
+ exit
+
+# 8. L3 Link to Edge Router
+interface GigabitEthernet1/0/24
+ no switchport
+ ip address 10.0.1.1 255.255.255.252
+ no shutdown
+ exit
+
+# 9. OSPF Configuration
+router ospf 1
+ router-id 10.2.2.2
+ network 192.168.11.0 0.0.0.255 area 0
+ network 192.168.12.0 0.0.0.255 area 0
+ network 10.0.1.0 0.0.0.3 area 0
+ passive-interface Vlan2
+ passive-interface Vlan3
+ exit
+
+# 10. Management Services
+ntp server 192.168.40.254
+logging 192.168.40.254
+snmp-server community pass2snmp_ro RO
+snmp-server community pass2snmp_rw RW
+
+end
+write memory
+
+################################
+# BR1 Access Switches
+# Configurations are analogous to HQ access switches
+# but within the BR1 VTP domain and IP schemes.
+################################
