@@ -1,0 +1,93 @@
+#######################################################################
+# CCNA Lab 13: Final Enterprise Network - Service Provider Configurations #
+#######################################################################
+
+################################
+# Router: Router0_SP
+################################
+
+enable
+configure terminal
+
+# 1. Basic Setup
+hostname Router0_SP
+enable secret pass0sp0
+
+# 2. Interface Configuration
+! Connection to HQ Router (Primary)
+interface Serial0/0/0
+ ip address 10.10.1.2 255.255.255.252
+ no shutdown
+ exit
+!
+! Connection to BR1 Router (Primary)
+interface Serial0/1/0
+ ip address 10.20.1.2 255.255.255.252
+ no shutdown
+ exit
+!
+! Connection to BR2 Router (Primary)
+interface Serial0/1/1
+ ip address 10.30.1.2 255.255.255.252
+ no shutdown
+ exit
+!
+! Link to other SP router
+interface Serial0/0/1
+ ip address 10.100.100.1 255.255.255.252
+ no shutdown
+ exit
+
+# 3. OSPF Routing Configuration
+router ospf 1
+ router-id 5.5.5.5
+ network 10.0.0.0 0.255.255.255 area 0
+ exit
+
+end
+write memory
+
+################################
+# Router: Router1_SP
+################################
+
+enable
+configure terminal
+
+# 1. Basic Setup
+hostname Router1_SP
+enable secret pass0sp1
+
+# 2. Interface Configuration
+! Connection to HQ Router (Redundant)
+interface Serial0/0/0
+ ip address 10.10.2.2 255.255.255.252
+ no shutdown
+ exit
+!
+! Connection to BR1 Router (Redundant)
+interface Serial0/1/0
+ ip address 10.20.2.2 255.255.255.252
+ no shutdown
+ exit
+!
+! Connection to BR2 Router (Redundant)
+interface Serial0/1/1
+ ip address 10.30.2.2 255.255.255.252
+ no shutdown
+ exit
+!
+! Link to other SP router
+interface Serial0/0/1
+ ip address 10.100.100.2 255.255.255.252
+ no shutdown
+ exit
+
+# 3. OSPF Routing Configuration
+router ospf 1
+ router-id 4.4.4.4
+ network 10.0.0.0 0.255.255.255 area 0
+ exit
+
+end
+write memory
